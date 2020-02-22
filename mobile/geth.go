@@ -119,7 +119,7 @@ func NewNode(datadir string, config *NodeConfig) (stack *Node, _ error) {
 	// Create the empty networking stack
 	nodeConf := &node.Config{
 		Name:        clientIdentifier,
-		Version:     params.Version,
+		Version:     params.VersionWithMeta,
 		DataDir:     datadir,
 		KeyStoreDir: filepath.Join(datadir, "keystore"), // Mobile should never use internal keystores!
 		P2P: p2p.Config{
@@ -131,6 +131,7 @@ func NewNode(datadir string, config *NodeConfig) (stack *Node, _ error) {
 			MaxPeers:         config.MaxPeers,
 		},
 	}
+
 	rawStack, err := node.New(nodeConf)
 	if err != nil {
 		return nil, err
@@ -188,12 +189,18 @@ func NewNode(datadir string, config *NodeConfig) (stack *Node, _ error) {
 	return &Node{rawStack}, nil
 }
 
+// Close terminates a running node along with all it's services, tearing internal
+// state doen too. It's not possible to restart a closed node.
+func (n *Node) Close() error {
+	return n.node.Close()
+}
+
 // Start creates a live P2P node and starts running it.
 func (n *Node) Start() error {
 	return n.node.Start()
 }
 
-// Stop terminates a running node along with all it's services. In the node was
+// Stop terminates a running node along with all it's services. If the node was
 // not started, an error is returned.
 func (n *Node) Stop() error {
 	return n.node.Stop()
